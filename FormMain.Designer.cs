@@ -36,10 +36,13 @@
       this.timer1 = new System.Windows.Forms.Timer(this.components);
       this.pbOutput = new System.Windows.Forms.PictureBox();
       this.panel1 = new System.Windows.Forms.Panel();
-      this.trackBarZoom = new System.Windows.Forms.TrackBar();
+      this.trackBarRotate = new System.Windows.Forms.TrackBar();
+      this.label3 = new System.Windows.Forms.Label();
       this.label2 = new System.Windows.Forms.Label();
+      this.trackBarZoom = new System.Windows.Forms.TrackBar();
       ((System.ComponentModel.ISupportInitialize)(this.pbOutput)).BeginInit();
       this.panel1.SuspendLayout();
+      ((System.ComponentModel.ISupportInitialize)(this.trackBarRotate)).BeginInit();
       ((System.ComponentModel.ISupportInitialize)(this.trackBarZoom)).BeginInit();
       this.SuspendLayout();
       // 
@@ -47,7 +50,7 @@
       // 
       this.cbListSerialPort.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
       this.cbListSerialPort.FormattingEnabled = true;
-      this.cbListSerialPort.Location = new System.Drawing.Point(26, 45);
+      this.cbListSerialPort.Location = new System.Drawing.Point(26, 29);
       this.cbListSerialPort.Name = "cbListSerialPort";
       this.cbListSerialPort.Size = new System.Drawing.Size(210, 21);
       this.cbListSerialPort.TabIndex = 0;
@@ -55,7 +58,7 @@
       // label1
       // 
       this.label1.AutoSize = true;
-      this.label1.Location = new System.Drawing.Point(26, 29);
+      this.label1.Location = new System.Drawing.Point(23, 13);
       this.label1.Name = "label1";
       this.label1.Size = new System.Drawing.Size(35, 13);
       this.label1.TabIndex = 1;
@@ -63,7 +66,7 @@
       // 
       // btnConectar
       // 
-      this.btnConectar.Location = new System.Drawing.Point(247, 45);
+      this.btnConectar.Location = new System.Drawing.Point(247, 29);
       this.btnConectar.Name = "btnConectar";
       this.btnConectar.Size = new System.Drawing.Size(91, 23);
       this.btnConectar.TabIndex = 2;
@@ -74,7 +77,7 @@
       // btnDesconectar
       // 
       this.btnDesconectar.Enabled = false;
-      this.btnDesconectar.Location = new System.Drawing.Point(344, 45);
+      this.btnDesconectar.Location = new System.Drawing.Point(344, 29);
       this.btnDesconectar.Name = "btnDesconectar";
       this.btnDesconectar.Size = new System.Drawing.Size(91, 23);
       this.btnDesconectar.TabIndex = 7;
@@ -95,14 +98,19 @@
       this.pbOutput.Dock = System.Windows.Forms.DockStyle.Fill;
       this.pbOutput.Location = new System.Drawing.Point(10, 10);
       this.pbOutput.Name = "pbOutput";
-      this.pbOutput.Size = new System.Drawing.Size(863, 679);
+      this.pbOutput.Size = new System.Drawing.Size(1175, 686);
       this.pbOutput.TabIndex = 9;
       this.pbOutput.TabStop = false;
       this.pbOutput.Paint += new System.Windows.Forms.PaintEventHandler(this.pbOutput_Paint);
+      this.pbOutput.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pbOutput_MouseDown);
+      this.pbOutput.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pbOutput_MouseMove);
+      this.pbOutput.MouseUp += new System.Windows.Forms.MouseEventHandler(this.pbOutput_MouseUp);
       this.pbOutput.Resize += new System.EventHandler(this.pbOutput_Resize);
       // 
       // panel1
       // 
+      this.panel1.Controls.Add(this.trackBarRotate);
+      this.panel1.Controls.Add(this.label3);
       this.panel1.Controls.Add(this.label2);
       this.panel1.Controls.Add(this.trackBarZoom);
       this.panel1.Controls.Add(this.cbListSerialPort);
@@ -112,8 +120,37 @@
       this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
       this.panel1.Location = new System.Drawing.Point(10, 10);
       this.panel1.Name = "panel1";
-      this.panel1.Size = new System.Drawing.Size(863, 88);
+      this.panel1.Size = new System.Drawing.Size(1175, 68);
       this.panel1.TabIndex = 10;
+      // 
+      // trackBarRotate
+      // 
+      this.trackBarRotate.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+      this.trackBarRotate.Location = new System.Drawing.Point(846, 29);
+      this.trackBarRotate.Maximum = 360;
+      this.trackBarRotate.Name = "trackBarRotate";
+      this.trackBarRotate.Size = new System.Drawing.Size(312, 45);
+      this.trackBarRotate.TabIndex = 11;
+      this.trackBarRotate.Value = 180;
+      // 
+      // label3
+      // 
+      this.label3.AutoSize = true;
+      this.label3.Location = new System.Drawing.Point(843, 13);
+      this.label3.Name = "label3";
+      this.label3.Size = new System.Drawing.Size(62, 13);
+      this.label3.TabIndex = 10;
+      this.label3.Text = "Rotacionar:";
+      // 
+      // label2
+      // 
+      this.label2.AutoSize = true;
+      this.label2.Location = new System.Drawing.Point(471, 13);
+      this.label2.Name = "label2";
+      this.label2.Size = new System.Drawing.Size(37, 13);
+      this.label2.TabIndex = 9;
+      this.label2.Text = "Zoom:";
       // 
       // trackBarZoom
       // 
@@ -123,22 +160,13 @@
       this.trackBarZoom.Name = "trackBarZoom";
       this.trackBarZoom.Size = new System.Drawing.Size(366, 45);
       this.trackBarZoom.TabIndex = 8;
-      this.trackBarZoom.Value = 1;
-      // 
-      // label2
-      // 
-      this.label2.AutoSize = true;
-      this.label2.Location = new System.Drawing.Point(481, 13);
-      this.label2.Name = "label2";
-      this.label2.Size = new System.Drawing.Size(37, 13);
-      this.label2.TabIndex = 9;
-      this.label2.Text = "Zoom:";
+      this.trackBarZoom.Value = 50;
       // 
       // FormMain
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-      this.ClientSize = new System.Drawing.Size(883, 699);
+      this.ClientSize = new System.Drawing.Size(1195, 706);
       this.Controls.Add(this.panel1);
       this.Controls.Add(this.pbOutput);
       this.Name = "FormMain";
@@ -149,6 +177,7 @@
       ((System.ComponentModel.ISupportInitialize)(this.pbOutput)).EndInit();
       this.panel1.ResumeLayout(false);
       this.panel1.PerformLayout();
+      ((System.ComponentModel.ISupportInitialize)(this.trackBarRotate)).EndInit();
       ((System.ComponentModel.ISupportInitialize)(this.trackBarZoom)).EndInit();
       this.ResumeLayout(false);
 
@@ -165,6 +194,8 @@
     private System.Windows.Forms.Panel panel1;
     private System.Windows.Forms.Label label2;
     private System.Windows.Forms.TrackBar trackBarZoom;
+    private System.Windows.Forms.TrackBar trackBarRotate;
+    private System.Windows.Forms.Label label3;
   }
 }
 

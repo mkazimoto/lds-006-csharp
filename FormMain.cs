@@ -17,16 +17,20 @@ namespace SerialPortApp
     private const int ArraySize = 100;
     private const int MinReflectivity = 10;
 
+    private const double DegreeRadian = Math.PI * 2 / 360;
+
     private Point Center;
+    private Point DragShift;
+    private Point DragInitial;
+    private Point DragFinal;
 
-    private readonly object Lock = new object();
-    private int count = 0;
-    private int[] distances = new int[360];
-    private SerialPort serialPort;
+    private int Count = 0;
+    private int[] Distances = new int[360];
+    private SerialPort SerialPort;
 
-    private Task taskLidar;
+    private Task TaskLidar;
 
-    private bool stopLidar = false;
+    private bool StopLidar = false;
     
     public FormMain()
     {
@@ -36,18 +40,18 @@ namespace SerialPortApp
     private void FormMain_Load(object sender, EventArgs e)
     {
       cbListSerialPort.DataSource = SerialPort.GetPortNames();
-      Center = new Point(pbOutput.Width / 2, pbOutput.Height / 2);
+      UpdateCenter();
     }
 
     private void BtnConectar_Click(object sender, EventArgs e)
     {
       try
       {
-        serialPort = new SerialPort((String)cbListSerialPort.SelectedItem);
-        serialPort.BaudRate = 115200;
-        serialPort.ReadTimeout = 5000;
+        SerialPort = new SerialPort((String)cbListSerialPort.SelectedItem);
+        SerialPort.BaudRate = 115200;
+        SerialPort.ReadTimeout = 5000;
 
-        serialPort.Open();
+        SerialPort.Open();
 
         cbListSerialPort.Enabled = false;
         btnConectar.Enabled = false;
@@ -58,39 +62,42 @@ namespace SerialPortApp
         MessageBox.Show(except.Message);
       }
 
-      taskLidar = Task.Run(() => StartLidarLoop());
+      TaskLidar = Task.Run(() => StartLidarLoop());
     }
 
     private void StartLidarLoop()
     {
-      serialPort.Write("$");
-      serialPort.Write("startlds$");
+      SerialPort.Write("$");
+      SerialPort.Write("startlds$");
 
-      stopLidar = false;
+      StopLidar = false;
       byte[] buffer = new byte[ArraySize];
       int[] values = new int[ArraySize];
-      while (!stopLidar)
+      while (!StopLidar)
       {
-          int b = serialPort.ReadByte();
-          if (b == 0xFA && count > 21)
+          int b = SerialPort.ReadByte();
+          if (b == 0xFA && Count > 21)
           {
-            if (count == 22)
+            if (Count == 22)
             {
               ProcessLidarData(values);
             }
-            count = 0;
+            Count = 0;
             values = new int[ArraySize];
             values[0] = b;
           }
           else
           {
-            if (count < ArraySize)
+            if (Count < ArraySize)
             {
-              values[count] = b;
+              values[Count] = b;
             }
           }
-          count++;
+          Count++;
       }
+
+      SerialPort.Write("stoplds$");
+      SerialPort.Close();
     }
 
     private void ProcessLidarData(int[] values)
@@ -99,9 +106,6 @@ namespace SerialPortApp
       int speed = GetInt(values[2], values[3]);
       int[] distance = new int[4];
       int[] reflectivity = new int[4];
-
-      Console.WriteLine("Angulo: " + angle);
-      Console.WriteLine("Velocidade: " + speed);
 
       for (int i = 0; i < 4; i++)
       {
@@ -124,11 +128,11 @@ namespace SerialPortApp
         {
           if (reflectivity[i] > MinReflectivity)
           {
-            distances[angle + i] = distance[i];
+            Distances[angle + i] = distance[i];
           }
           else
           {
-            distances[angle + i] = -1;
+            Distances[angle + i] = -1;
           }
         }
       }
@@ -153,15 +157,10 @@ namespace SerialPortApp
     {
       try
       {
-        stopLidar = true;
-        if (taskLidar != null)
-          taskLidar.Wait();
+        StopLidar = true;
+        if (TaskLidar != null)
+          TaskLidar.Wait();
 
-        if (serialPort.IsOpen)
-        {
-          serialPort.Write("stoplds$");
-          serialPort.Close();
-        }
         cbListSerialPort.Enabled = true;
         btnConectar.Enabled = true;
         btnDesconectar.Enabled = false;
@@ -174,7 +173,7 @@ namespace SerialPortApp
 
     private void Timer1_Tick(object sender, EventArgs e)
     {
-      if (serialPort == null)
+      if (SerialPort == null)
       {
         var listPortsNew = SerialPort.GetPortNames();
         if (listPortsNew.Length != cbListSerialPort.Items.Count)
@@ -188,10 +187,12 @@ namespace SerialPortApp
     {
       for (int angle = 0; angle < 360; angle++)
       {
-        if (distances[angle] > 0)
+        if (Distances[angle] > 0)
         {
-          int x = (int)(Math.Sin(angle * Math.PI * 2 / 360) * distances[angle] * (double)trackBarZoom.Value / 50 + Center.X);
-          int y = (int)(Math.Cos(angle * Math.PI * 2 / 360) * distances[angle] * (double)trackBarZoom.Value / 50 + Center.Y);
+          var angleShift = (angle + trackBarRotate.Value) % 360;
+
+          int x = (int)(Math.Sin(angleShift * DegreeRadian) * Distances[angle] * (double)trackBarZoom.Value / 150d + Center.X);
+          int y = (int)(Math.Cos(angleShift * DegreeRadian) * Distances[angle] * (double)trackBarZoom.Value / 150d + Center.Y);
 
           e.Graphics.DrawLine(Pens.Gray, Center.X, Center.Y, x, y);
           e.Graphics.DrawArc(Pens.Lime, x, y, 3, 3, 0, 360);
@@ -209,7 +210,45 @@ namespace SerialPortApp
 
     private void pbOutput_Resize(object sender, EventArgs e)
     {
-      Center = new Point(pbOutput.Width / 2, pbOutput.Height / 2);
+      UpdateCenter();
+    }
+
+    private void UpdateCenter()
+    {
+      Center = new Point(pbOutput.Width / 2 + DragShift.X + (DragFinal.X - DragInitial.X), pbOutput.Height / 2 + DragShift.Y + (DragFinal.Y - DragInitial.Y));
+    }
+
+    private void pbOutput_MouseDown(object sender, MouseEventArgs e)
+    {
+      if (e.Button == MouseButtons.Left)
+      {
+        DragInitial = new Point(e.X, e.Y);
+        DragFinal = new Point(e.X, e.Y);
+        UpdateCenter();
+        pbOutput.Invalidate();
+      }
+    }
+
+    private void pbOutput_MouseMove(object sender, MouseEventArgs e)
+    {
+      if (e.Button == MouseButtons.Left)
+      {
+        DragFinal = new Point(e.X, e.Y);
+        UpdateCenter();
+        pbOutput.Invalidate();
+      }
+    }
+
+    private void pbOutput_MouseUp(object sender, MouseEventArgs e)
+    {
+      if (e.Button == MouseButtons.Left)
+      {
+        DragShift = new Point(DragShift.X + (DragFinal.X - DragInitial.X), DragShift.Y + (DragFinal.Y - DragInitial.Y));
+        DragInitial = Point.Empty;
+        DragFinal = Point.Empty;
+        UpdateCenter();
+        pbOutput.Invalidate();
+      }
     }
   }
 }
